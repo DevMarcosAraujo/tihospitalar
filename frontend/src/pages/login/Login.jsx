@@ -21,6 +21,11 @@ export default function Login() {
 
   return (
     <div className="login-page">
+      <div className="login-fundo" aria-hidden="true">
+        <span className="orb o1" /><span className="orb o2" /><span className="orb o3" />
+        <span className="login-grade" />
+        <span className="login-ti">TI</span>
+      </div>
       <div className="login-card">
         <span className="brand-mark login-mark">TI</span>
         <h1>Mapeamento de TI</h1>

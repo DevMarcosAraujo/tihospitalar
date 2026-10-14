@@ -426,3 +426,18 @@ a.setor-item { text-decoration: none; color: inherit; }
 .unidade-seletor select { width: 100%; text-transform: none; font-size: .95rem; letter-spacing: 0; }
 .unidade-seletor strong { color: #fff; text-transform: none; font-size: .95rem; letter-spacing: 0; }
 .topbar-unidade { margin-left: auto; opacity: .85; }
+
+/* Fundo animado do login */
+.login-page { position: relative; overflow: hidden; background: linear-gradient(135deg, #070b1f 0%, #1b0f4d 45%, #04415c 100%); background-size: 200% 200%; animation: loginBg 14s ease infinite; }
+.login-fundo { position: absolute; inset: 0; pointer-events: none; }
+.login-fundo .orb { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .65; animation: flutua 12s ease-in-out infinite; }
+.login-fundo .o1 { width: 420px; height: 420px; background: #00e5ff; top: -120px; left: -100px; }
+.login-fundo .o2 { width: 480px; height: 480px; background: #8a2bff; bottom: -160px; right: -120px; animation-delay: -4s; }
+.login-fundo .o3 { width: 320px; height: 320px; background: #ff2e93; top: 40%; left: 55%; opacity: .4; animation-delay: -8s; }
+.login-grade { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px); background-size: 48px 48px; mask-image: radial-gradient(circle at center, #000 30%, transparent 80%); }
+.login-ti { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: min(60vw, 520px); font-weight: 900; letter-spacing: -.04em; color: transparent; -webkit-text-stroke: 2px rgba(0,229,255,.22); text-shadow: 0 0 60px rgba(138,43,255,.35); }
+.login-card { position: relative; z-index: 1; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); box-shadow: 0 25px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(0,229,255,.35), 0 0 40px rgba(0,229,255,.25); }
+.login-mark { background: linear-gradient(135deg, #00b8d9, #8a2bff) !important; box-shadow: 0 6px 20px rgba(138,43,255,.5); }
+@keyframes loginBg { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@keyframes flutua { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,-30px) scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .login-page, .login-fundo .orb { animation: none; } }
