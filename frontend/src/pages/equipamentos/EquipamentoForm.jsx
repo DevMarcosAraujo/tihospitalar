@@ -252,7 +252,7 @@ export default function EquipamentoForm({ equip, inicial, onClose, onSaved }) {
 
               {modelo && usaIp && (
                 <Field label="Endereço IP" required className="full">
-                  <input value={f.ip} onChange={(e) => setF({ ...f, ip: e.target.value.replace(/[,;s]/g, '.').replace(/.{2,}/g, '.') })} required inputMode="decimal" autoComplete="off" placeholder="Ex.: 10.0.1.50" />
+                  <input value={f.ip} onChange={(e) => setF({ ...f, ip: e.target.value.replace(/[^0-9.,;]/g, '').replace(/[,;]/g, '.').replace(/[.]{2,}/g, '.') })} required inputMode="decimal" autoComplete="off" placeholder="Ex.: 10.0.1.50" />
                 </Field>
               )}
 
