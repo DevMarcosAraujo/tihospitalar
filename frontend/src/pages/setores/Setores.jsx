@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Pencil, Plus, Power } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { api } from '../../api/client';
 import { useApi, useDebounced } from '../../api/useApi';
 import { useAuth } from '../../auth/AuthContext';
@@ -11,8 +11,8 @@ import { Empty, ErrorMsg, Field, FormActions, Loading, Modal, Options, PageHeade
 const COM_LEITO = ['SETOR PS/CDM', 'UTI', 'CENTRO CIRÚRGICO']; // divisões que têm beira leito
 const VAZIO = { unidade_id: '', nome: '', localizacao: '', responsavel: '', ramal: '', observacoes: '', ativo: true };
 
-function SetorForm({ setor, unidades, divisoes, onClose, onSaved }) {
-  const [f, setF] = useState(setor ? { ...VAZIO, ...setor } : VAZIO);
+function SetorForm({ setor, inicial, unidades, divisoes, onClose, onSaved }) {
+  const [f, setF] = useState(setor ? { ...VAZIO, ...setor } : { ...VAZIO, ...(inicial || {}) });
   const [erro, setErro] = useState('');
   const [saving, setSaving] = useState(false);
   // Divisão = macro-setor (UTI, Centro Cirúrgico…): escolhe uma existente ou cria outra
@@ -103,6 +103,13 @@ export default function Setores() {
 
   const recarregar = () => { reload(); todos.reload(); };
 
+  async function excluir(s) {
+    if (!window.confirm(`Excluir o setor "${s.nome}" definitivamente? Esta ação não pode ser desfeita.`)) return;
+    setErro('');
+    try { await api(`/setores/${s.id}`, { method: 'DELETE' }); recarregar(); }
+    catch (err) { setErro(err.message); }
+  }
+
   async function alternar(s) {
     setErro('');
     try { await api(`/setores/${s.id}/ativo`, { method: 'PATCH', body: { ativo: !s.ativo } }); recarregar(); }
@@ -112,7 +119,7 @@ export default function Setores() {
   return (
     <>
       <PageHeader title="Setores" subtitle="Setores por divisão">
-        {isAdmin && <button className="btn btn-primary" onClick={() => setModal({})}><Plus size={18} /> Novo setor</button>}
+        {isAdmin && <button className="btn btn-primary" onClick={() => setModal({ localizacao: divisao })}><Plus size={18} /> Novo setor</button>}
       </PageHeader>
 
       <div className="toolbar">
@@ -171,6 +178,11 @@ export default function Setores() {
                     <span className="setor-qtd">{leitos[nome] || 0}</span>
                   </Link>
                 )}
+                {isAdmin && nome !== 'Sem divisão' && !busca.trim() && (
+                  <button type="button" className="btn" onClick={() => setModal({ localizacao: nome, unidade_id: unidadeId || lista[0]?.unidade_id || '' })}>
+                    <Plus size={16} /> Novo setor em {nome}
+                  </button>
+                )}
                 {lista.map((s) => (
                   <div key={s.id} className={`setor-item ${s.ativo ? '' : 'inativo'}`}>
                     <button type="button" className="setor-item-corpo" onClick={() => nav(`/setores/${s.id}`)}>
@@ -184,6 +196,7 @@ export default function Setores() {
                       <span className="acoes">
                         <button className="icon-btn" title="Editar" onClick={() => setModal(s)}><Pencil size={18} /></button>
                         <button className="icon-btn" title={s.ativo ? 'Inativar' : 'Reativar'} onClick={() => alternar(s)}><Power size={18} /></button>
+                        <button className="icon-btn" title="Excluir" onClick={() => excluir(s)}><Trash2 size={18} color="var(--red)" /></button>
                       </span>
                     )}
                   </div>
@@ -196,7 +209,7 @@ export default function Setores() {
 
       {ver && <EquipamentoDetalhe equip={ver} onClose={() => setVer(null)} />}
       {modal && (
-        <SetorForm setor={modal.id ? modal : null} unidades={unidades.data} divisoes={divisoes}
+        <SetorForm setor={modal.id ? modal : null} inicial={modal.id ? null : modal} unidades={unidades.data} divisoes={divisoes}
           onClose={() => setModal(null)} onSaved={() => { setModal(null); recarregar(); }} />
       )}
     </>

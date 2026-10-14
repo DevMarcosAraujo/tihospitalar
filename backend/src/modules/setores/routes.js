@@ -91,4 +91,15 @@ router.patch('/:id/ativo', requireAdmin, wrap(async (req, res) => {
   res.json(rows[0]);
 }));
 
+router.delete('/:id', requireAdmin, wrap(async (req, res) => {
+  const id = toId(req.params.id);
+  const t = await db.query('SELECT COUNT(*)::int AS n FROM equipamentos WHERE setor_id = $1', [id]);
+  if (t.rows[0].n > 0) {
+    throw new HttpError(409, `Este setor tem ${t.rows[0].n} equipamento(s). Exclua ou mova os equipamentos antes, ou apenas inative o setor.`);
+  }
+  const { rowCount } = await db.query('DELETE FROM setores WHERE id = $1', [id]);
+  if (!rowCount) throw new HttpError(404, 'Setor não encontrado');
+  res.json({ ok: true });
+}));
+
 module.exports = router;
