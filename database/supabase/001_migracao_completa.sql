@@ -155,6 +155,9 @@ ALTER TABLE equipamentos DROP CONSTRAINT IF EXISTS equip_setor_ou_divisao;
 ALTER TABLE equipamentos ADD CONSTRAINT equip_setor_ou_divisao CHECK (setor_id IS NOT NULL OR divisao IS NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_equip_divisao ON equipamentos(divisao);
 
+-- Login sem diferenciar maiúsculas
+CREATE UNIQUE INDEX IF NOT EXISTS uq_usuarios_usuario_lower ON usuarios (lower(usuario));
+
 -- 2) CATEGORIAS E TIPOS DE EQUIPAMENTO
 -- Categorias e tipos (regras de hostname/IP da especificação)
 -- IP: Computadores, Impressoras, Rede (categoria) + Telefone IP, TV e Projetor (tipo)

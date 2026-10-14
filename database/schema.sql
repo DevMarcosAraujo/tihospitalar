@@ -142,3 +142,6 @@ ALTER TABLE equipamentos ADD COLUMN IF NOT EXISTS divisao VARCHAR(80);
 ALTER TABLE equipamentos DROP CONSTRAINT IF EXISTS equip_setor_ou_divisao;
 ALTER TABLE equipamentos ADD CONSTRAINT equip_setor_ou_divisao CHECK (setor_id IS NOT NULL OR divisao IS NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_equip_divisao ON equipamentos(divisao);
+
+-- Login sem diferenciar maiúsculas
+CREATE UNIQUE INDEX IF NOT EXISTS uq_usuarios_usuario_lower ON usuarios (lower(usuario));

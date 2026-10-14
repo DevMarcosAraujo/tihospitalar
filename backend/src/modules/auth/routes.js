@@ -10,7 +10,7 @@ router.post('/login', wrap(async (req, res) => {
   required(req.body, ['usuario', 'senha']);
   const { rows } = await db.query(
     `SELECT u.id, u.nome, u.usuario, u.senha_hash, u.perfil, u.ativo, u.unidade_id, u.trocar_senha, un.nome AS unidade_nome
-     FROM usuarios u LEFT JOIN unidades un ON un.id = u.unidade_id WHERE u.usuario = $1`,
+     FROM usuarios u LEFT JOIN unidades un ON un.id = u.unidade_id WHERE lower(u.usuario) = lower($1)`,
     [String(req.body.usuario).trim()]
   );
   const u = rows[0];
