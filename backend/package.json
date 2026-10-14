@@ -1,0 +1,24 @@
+{
+  "name": "ti-hospitalar-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API REST do Sistema de Gestão de Infraestrutura de TI Hospitalar",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:init": "node scripts/initdb.js",
+    "db:reset": "node scripts/initdb.js --reset",
+    "db:seed": "node scripts/seed.js",
+    "db:zero": "node scripts/zero.js",
+    "db:setores": "node scripts/importar-setores.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0"
+  }
+}

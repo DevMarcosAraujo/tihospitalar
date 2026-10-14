@@ -1,0 +1,13 @@
+# Deploy do frontend no Netlify (base directory: frontend)
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Aplicação de página única: qualquer rota abre o index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

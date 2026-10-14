@@ -1,0 +1,23 @@
+# Deploy do backend no Render (Blueprint). Preencha as variáveis marcadas como sync: false no painel.
+services:
+  - type: web
+    name: ti-hospitalar-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/saude
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATABASE_SSL
+        value: "true"
+      - key: JWT_EXPIRES
+        value: 12h
+      - key: DATABASE_URL     # Supabase → Connect → Session pooler
+        sync: false
+      - key: JWT_SECRET       # gere: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+        sync: false
+      - key: CORS_ORIGIN      # https://SEU-SITE.netlify.app
+        sync: false
