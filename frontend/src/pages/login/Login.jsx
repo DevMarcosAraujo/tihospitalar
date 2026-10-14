@@ -27,7 +27,7 @@ export default function Login() {
         <span className="login-ti">TI</span>
       </div>
       <div className="login-card">
-        <span className="brand-mark login-mark">TI</span>
+        <img src="/logo.svg" alt="TI" className="login-logo" />
         <h1>Mapeamento de TI</h1>
         <p className="muted">MedSênior · SIG — Brasília/DF</p>
         <form onSubmit={entrar}>

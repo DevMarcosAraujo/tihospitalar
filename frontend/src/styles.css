@@ -441,3 +441,6 @@ a.setor-item { text-decoration: none; color: inherit; }
 @keyframes loginBg { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 @keyframes flutua { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,-30px) scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .login-page, .login-fundo .orb { animation: none; } }
+
+.login-logo { width: 96px; height: 96px; display: block; margin: -.5rem auto .25rem; filter: drop-shadow(0 6px 18px rgba(138,43,255,.45)); }
+.menu-logo { width: 38px; height: 38px; flex: none; }

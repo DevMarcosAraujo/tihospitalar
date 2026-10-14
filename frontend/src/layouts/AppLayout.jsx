@@ -95,7 +95,7 @@ export default function AppLayout() {
 
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">TI</span>
+          <img src="/logo.svg" alt="TI" className="menu-logo" />
           {!mini && <span className="brand-name">Infra Hospitalar</span>}
           {mobile && <button className="icon-btn drawer-close" onClick={() => setGaveta(false)} aria-label="Fechar menu"><X size={22} /></button>}
         </div>
