@@ -13,11 +13,11 @@ import BeiraLeito from './pages/beira-leito/BeiraLeito';
 import Usuarios from './pages/usuarios/Usuarios';
 import Relatorios from './pages/relatorios/Relatorios';
 import Configuracoes from './pages/configuracoes/Configuracoes';
-import { Loading } from './components/ui';
+import { TelaCarregando } from './components/ui';
 
 function Protegida({ children, admin, recurso }) {
   const { user, ready, isAdmin, recursos } = useAuth();
-  if (!ready) return <Loading />;
+  if (!ready) return <TelaCarregando />;
   if (!user) return <Navigate to="/login" replace />;
   if (admin && !isAdmin) return <Navigate to="/" replace />;
   if (recurso && !isAdmin && !recursos[recurso]) return <Navigate to="/" replace />;
@@ -26,7 +26,7 @@ function Protegida({ children, admin, recurso }) {
 
 export default function App() {
   const { user, ready } = useAuth();
-  if (!ready) return <Loading />;
+  if (!ready) return <TelaCarregando />;
   if (user?.trocar_senha) return <TrocarSenha />;
 
   return (

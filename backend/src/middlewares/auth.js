@@ -3,6 +3,9 @@ const env = require('../config/env');
 const db = require('../config/db');
 const { HttpError, wrap } = require('../utils/http');
 
+const CACHE_MS = 15000;
+const cacheUsuarios = new Map(); // id -> { u, ate }
+
 // Valida o token e recarrega o usuário (assim, inativar bloqueia na hora)
 const authenticate = wrap(async (req, res, next) => {
   const header = req.headers.authorization || '';
@@ -16,12 +19,17 @@ const authenticate = wrap(async (req, res, next) => {
     throw new HttpError(401, 'Sessão inválida ou expirada');
   }
 
+  const hit = cacheUsuarios.get(payload.sub);
+  let u = hit && hit.ate > Date.now() ? hit.u : null;
+  if (!u) {
   const { rows } = await db.query(
     `SELECT u.id, u.nome, u.usuario, u.perfil, u.ativo, u.unidade_id, u.trocar_senha, un.nome AS unidade_nome
      FROM usuarios u LEFT JOIN unidades un ON un.id = u.unidade_id WHERE u.id = $1`,
     [payload.sub]
   );
-  const u = rows[0];
+  u = rows[0];
+  if (u) cacheUsuarios.set(payload.sub, { u, ate: Date.now() + CACHE_MS });
+  }
   if (!u || !u.ativo) throw new HttpError(401, 'Usuário inativo ou inexistente');
 
   // Primeiro acesso / senha redefinida: só pode trocar a senha (rotas /api/auth)

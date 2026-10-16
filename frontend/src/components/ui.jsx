@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Search, X } from 'lucide-react';
 import { percentual } from '../utils/format';
@@ -65,7 +65,32 @@ export const SearchBox = ({ value, onChange, placeholder = 'Buscar…' }) => (
   </div>
 );
 
-export const Loading = () => <div className="state">Carregando…</div>;
+export const Loading = () => <div className="state"><div className="spinner" />Carregando…</div>;
+
+// Tela cheia: aparece enquanto o sistema abre, com barra de progresso e porcentagem.
+// O progresso é estimado: sobe rápido no começo e desacelera perto de 95% até o sistema ficar pronto.
+export function TelaCarregando() {
+  const [pct, setPct] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setPct((p) => p + (96 - p) * 0.06), 200);
+    return () => clearInterval(t);
+  }, []);
+  const n = Math.floor(pct);
+  return (
+    <div className="carregando" role="status" aria-live="polite">
+      <span className="orb o1" /><span className="orb o2" />
+      <div className="carregando-centro">
+        <div className="carregando-logo">
+          <span className="carregando-anel" /><span className="carregando-anel b" />
+          <img src="/logo.svg" alt="" />
+        </div>
+        <h2>Mapeamento de TI</h2>
+        <div className="carregando-barra"><span style={{ width: n + '%' }} /></div>
+        <p className="carregando-pct">{n}%</p>
+      </div>
+    </div>
+  );
+}
 export const ErrorMsg = ({ children }) => (children ? <div className="alert alert-error">{children}</div> : null);
 export const Empty = ({ children = 'Nenhum registro encontrado.' }) => <div className="state">{children}</div>;
 
