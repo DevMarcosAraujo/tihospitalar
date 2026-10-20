@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   Building2, Download, Map as MapIcon, FileText, Layers, LayoutDashboard, LogOut, Menu,
-  PanelLeftClose, PanelLeftOpen, Settings, Users, X,
+  PanelLeftClose, PanelLeftOpen, Settings, Users, Wifi, X,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useApi } from '../api/useApi';
@@ -13,6 +13,7 @@ const MENU = [
   { to: '/unidades', label: 'Unidades', icon: Building2 },
   { to: '/mapeamento', label: 'Mapeamento', icon: MapIcon, recurso: 'mapeamento_tecnicos' },
   { to: '/setores', label: 'Setores', icon: Layers },
+  { to: '/access-points', label: 'Access Points', icon: Wifi },
   { to: '/usuarios', label: 'Usuários', icon: Users, admin: true },
   { to: '/exportar', label: 'Exportar', icon: Download, admin: true },
   { to: '/relatorios', label: 'Relatórios', icon: FileText, admin: true },

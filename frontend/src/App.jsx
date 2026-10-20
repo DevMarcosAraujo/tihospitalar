@@ -11,6 +11,7 @@ import SetorDetalhe from './pages/setores/SetorDetalhe';
 import Mapeamento from './pages/mapeamento/Mapeamento';
 import BeiraLeito from './pages/beira-leito/BeiraLeito';
 import Usuarios from './pages/usuarios/Usuarios';
+import AccessPoints from './pages/accesspoints/AccessPoints';
 import Exportar from './pages/exportar/Exportar';
 import Relatorios from './pages/relatorios/Relatorios';
 import Configuracoes from './pages/configuracoes/Configuracoes';
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="equipamentos" element={<Navigate to="/setores" replace />} />
         <Route path="tarefas/*" element={<Navigate to="/" replace />} />
         <Route path="usuarios" element={<Protegida admin><Usuarios /></Protegida>} />
+        <Route path="access-points" element={<AccessPoints />} />
         <Route path="exportar" element={<Protegida admin><Exportar /></Protegida>} />
         <Route path="relatorios" element={<Protegida admin><Relatorios /></Protegida>} />
         <Route path="configuracoes" element={<Protegida admin><Configuracoes /></Protegida>} />
