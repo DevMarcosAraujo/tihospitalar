@@ -46,7 +46,7 @@ export default function SetorDetalhe() {
       return nat(ga, gb) || nat(chave(a), chave(b));
     });
   // Host: o do próprio equipamento; impressora sem host mostra o PC ao qual está ligada (ou o IP)
-  const hostDe = (e) => e.hostname || (e.ligado_a_hostname ? `PC ${e.ligado_a_hostname}` : e.ip) || '—';
+  const hostDe = (e) => (aba === 'impressora' ? e.ip || e.hostname : e.hostname || (e.ligado_a_hostname ? `PC ${e.ligado_a_hostname}` : e.ip)) || '—';
 
   const recarregar = () => { setor.reload(); equips.reload(); };
 
@@ -112,14 +112,14 @@ export default function SetorDetalhe() {
         {equips.loading && !equips.data ? <Loading /> : !visiveis.length ? <Empty>Nenhum equipamento nesta aba.</Empty> : (
           <table>
             <thead>
-              <tr><th>Equipamento</th><th>Host</th><th>Guichê</th>{isAdmin && <th />}</tr>
+              <tr><th>Equipamento</th><th>Host</th><th>{aba === 'impressora' ? 'Hostname da máquina' : 'Guichê'}</th>{isAdmin && <th />}</tr>
             </thead>
             <tbody>
               {visiveis.map((e) => (
                 <tr key={e.id} className={`clicavel ${e.status === 'INATIVO' ? 'inativo' : ''}`} onClick={() => setVer(e)}>
-                  <td>{aba === 'pc' && (e.tipo === 'Notebook' ? <Laptop size={16} style={{ verticalAlign: '-3px', marginRight: 6 }} /> : <Monitor size={16} style={{ verticalAlign: '-3px', marginRight: 6 }} />)}<strong>{e.nome || e.tipo}</strong>{e.status !== 'ATIVO' && <> <Badge map={STATUS_EQUIP} value={e.status} /></>}</td>
+                  <td>{aba === 'pc' && (e.tipo === 'Notebook' ? <Laptop size={16} style={{ verticalAlign: '-3px', marginRight: 6 }} /> : <Monitor size={16} style={{ verticalAlign: '-3px', marginRight: 6 }} />)}<strong>{e.nome || e.tipo}</strong>{aba === 'impressora' && !e.nome && <span className="pendente" title="Atenção: falta o nome padrão. O técnico deve ir até a impressora e atualizar as informações.">?</span>}{aba === 'impressora' && e.nome && <div className="muted">{[e.tipo, e.fabricante, e.modelo].filter(Boolean).join(' · ')}</div>}{e.status !== 'ATIVO' && <> <Badge map={STATUS_EQUIP} value={e.status} /></>}</td>
                   <td>{hostDe(e)}</td>
-                  <td>{e.sala || '—'}</td>
+                  <td>{aba === 'impressora' ? e.ligado_a_hostname || '—' : e.sala || '—'}</td>
                   {isAdmin && (
                     <td className="acoes" onClick={(ev) => ev.stopPropagation()}>
                       <button className="icon-btn" title="Editar" onClick={() => setEdit(e)}><Pencil size={17} /></button>

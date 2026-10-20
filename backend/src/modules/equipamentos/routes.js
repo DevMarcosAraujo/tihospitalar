@@ -157,6 +157,12 @@ async function preparar(b, user, selfId = null) {
       SELECT t2.id FROM tipos_equipamento t2 JOIN categorias_equipamento c2 ON c2.id = t2.categoria_id WHERE c2.nome = 'Impressoras')`, serie);
     if (dup) throw new HttpError(409, `Já existe uma impressora com o número de série ${serie} (${onde(dup)})`);
   }
+  // Nome padrão da impressora (ex.: IMP_SIG_SCAN_CDM): único no sistema
+  const nomeImp = impressora ? emptyToNull(b.nome)?.toUpperCase().replace(/s+/g, '_') || null : null;
+  if (nomeImp) {
+    const dup = await achar('upper(trim(e.nome)) = $1', nomeImp);
+    if (dup) throw new HttpError(409, `Já existe um equipamento com o nome ${nomeImp} (${onde(dup)})`);
+  }
   if (hostname) {
     const dup = await achar('upper(trim(e.hostname)) = $1', hostname);
     if (dup) throw new HttpError(409, `Já existe um equipamento com o hostname ${hostname} (${onde(dup)})`);
@@ -212,7 +218,7 @@ async function preparar(b, user, selfId = null) {
     // Campos condicionais: ignorados quando a categoria/tipo não os utiliza
     hostname,
     teamviewer: usaHost ? emptyToNull(b.teamviewer) : null,
-    nome: tipo.rows[0].tipo_nome === 'TV' ? emptyToNull(b.nome) : null,
+    nome: impressora ? nomeImp : tipo.rows[0].tipo_nome === 'TV' ? emptyToNull(b.nome) : null,
     teamviewerSenha: usaHost ? emptyToNull(b.teamviewer_senha) : null,
     // só impressoras: null = sem computador; 'ligado' informa se o corpo trouxe o campo
     ligadoAId, informouLigacao: impressora && 'ligado_a_id' in b,

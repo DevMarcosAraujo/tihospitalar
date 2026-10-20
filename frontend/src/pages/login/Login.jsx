@@ -49,6 +49,7 @@ export default function Login() {
           <button className="btn btn-primary btn-lg" disabled={enviando}>{enviando ? 'Entrando…' : 'Entrar'}</button>
         </form>
         <p className="login-ajuda muted">Primeiro acesso? Use a senha provisória enviada pelo administrador.</p>
+        <p className="login-creditos muted">Arquitetura: Rodrigo Souza · Engenheiro: Marcos Araujo</p>
       </div>
     </div>
   );

@@ -30,7 +30,7 @@ export default function EquipamentoDetalhe({ equip: e, onClose, inline }) {
         </Item>
         <Item label="Unidade">{e.unidade_nome}</Item>
 
-        {e.nome && <Item label="Nome do painel">{e.nome}</Item>}
+        {e.nome && <Item label={e.categoria === 'Impressoras' ? 'Nome da impressora' : 'Nome do painel'}>{e.nome}</Item>}
         {e.hostname && <Item label="Hostname"><span style={mono}>{e.hostname}</span></Item>}
         {e.teamviewer && <Item label="ID TeamViewer / AnyDesk"><span style={mono}>{e.teamviewer}</span></Item>}
         {e.teamviewer && <Item label="Senha de acesso"><span style={mono}>{e.teamviewer_senha}</span></Item>}

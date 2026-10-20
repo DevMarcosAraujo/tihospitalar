@@ -68,6 +68,15 @@ export default function EquipamentoForm({ equip, inicial, onClose, onSaved }) {
   const tiposPc = (catPc?.tipos || []).filter((t) => ['Desktop', 'Notebook'].includes(t.nome) || String(t.id) === String(equip?.tipo_id));
   const pcAtual = tiposPc.find((t) => String(t.id) === String(f.tipo_id)) || tiposPc.find((t) => t.nome === 'Desktop');
 
+  // Nome padrão: IMP_<UNIDADE>_<TIPO>_<LOCAL> (ex.: IMP_SIG_SCAN_CDM); multifuncional usa SCAN
+  const limpa = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  const prefixoNome = modelo && setorAtual
+    ? `IMP_${limpa(setorAtual.unidade_nome)}_${/multifuncional/i.test(modelo.nome) ? 'SCAN' : limpa(modelo.nome)}_`
+    : '';
+  const nomeAuto = prefixoNome && setorAtual ? prefixoNome + limpa(setorAtual.nome) : '';
+  // Novo: acompanha o setor. Editando: mantém o nome gravado (o administrador pode trocar)
+  const nomeFinal = f.nomeEditado ?? (equip?.nome || nomeAuto);
+
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const upper = (k) => (e) => setF({ ...f, [k]: e.target.value.toUpperCase() });
 
@@ -119,6 +128,7 @@ export default function EquipamentoForm({ equip, inicial, onClose, onSaved }) {
           fabricante: f.fabricante,
           modelo: f.modelo_txt,
           numero_serie: f.numero_serie,
+          nome: nomeFinal,
           ip: usaIp ? f.ip : '',
           ligado_a_id: usaIp ? null : f.ligado_a_id,
         }),
@@ -250,6 +260,14 @@ export default function EquipamentoForm({ equip, inicial, onClose, onSaved }) {
                 <input value={f.numero_serie} onChange={upper('numero_serie')} required placeholder="Ex.: U654321A" />
               </Field>
 
+              {modelo && (
+                <Field label="Nome da impressora" className="full"
+                  hint={isAdmin ? 'Gerado pelo setor escolhido. Só o administrador pode alterar.' : 'Gerado automaticamente pelo setor escolhido.'}>
+                  <input value={nomeFinal} readOnly={!isAdmin} onChange={(e) => setF({ ...f, nomeEditado: e.target.value.toUpperCase().replace(/s+/g, '_') })}
+                    placeholder="Escolha o setor para gerar o nome" />
+                </Field>
+              )}
+
               {modelo && usaIp && (
                 <Field label="Endereço IP" required className="full">
                   <input value={f.ip} onChange={(e) => setF({ ...f, ip: e.target.value.replace(/[^0-9.,;]/g, '').replace(/[,;]/g, '.').replace(/[.]{2,}/g, '.') })} required inputMode="decimal" autoComplete="off" placeholder="Ex.: 10.0.1.50" />
@@ -257,7 +275,7 @@ export default function EquipamentoForm({ equip, inicial, onClose, onSaved }) {
               )}
 
               {modelo && !usaIp && (
-                <Field label="Computador conectado (host)" required className="full"
+                <Field label="Computador conectado (hostname)" required className="full"
                   hint={!f.setor_id ? 'Escolha o setor primeiro' : pcs.data && !pcs.data.length ? 'Nenhum computador cadastrado neste setor. Cadastre o PC primeiro.' : undefined}>
                   <select value={f.ligado_a_id} onChange={set('ligado_a_id')} disabled={!f.setor_id}>
                     <option value="">Selecione o PC…</option>

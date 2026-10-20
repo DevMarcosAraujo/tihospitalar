@@ -3,6 +3,8 @@
 Documentação do que foi construído, das regras do sistema e de como publicar.
 Repositório: https://github.com/DevMarcosAraujo/tihospitalar
 
+**Arquitetura:** Rodrigo Souza · **Engenheiro:** Marcos Araujo
+
 > **Segurança:** este arquivo não contém senhas nem chaves. Senhas do banco, `JWT_SECRET` e senha provisória
 > do administrador ficam só no painel do Render/Supabase e com o responsável.
 

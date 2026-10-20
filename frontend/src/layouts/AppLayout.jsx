@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  Building2, Map as MapIcon, FileText, Layers, LayoutDashboard, LogOut, Menu,
+  Building2, Download, Map as MapIcon, FileText, Layers, LayoutDashboard, LogOut, Menu,
   PanelLeftClose, PanelLeftOpen, Settings, Users, X,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
@@ -14,6 +14,7 @@ const MENU = [
   { to: '/mapeamento', label: 'Mapeamento', icon: MapIcon, recurso: 'mapeamento_tecnicos' },
   { to: '/setores', label: 'Setores', icon: Layers },
   { to: '/usuarios', label: 'Usuários', icon: Users, admin: true },
+  { to: '/exportar', label: 'Exportar', icon: Download, admin: true },
   { to: '/relatorios', label: 'Relatórios', icon: FileText, admin: true },
   { to: '/configuracoes', label: 'Configurações', icon: Settings, admin: true },
 ];
