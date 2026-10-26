@@ -15,6 +15,7 @@ app.use('/api/unidades', require('./modules/unidades/routes'));
 app.use('/api/setores', require('./modules/setores/routes'));
 app.use('/api/equipamentos', require('./modules/equipamentos/routes'));
 app.use('/api/access-points', require('./modules/accesspoints/routes'));
+app.use('/api/atividades', require('./modules/atividades/routes'));
 app.use('/api/tarefas', require('./modules/tarefas/routes'));
 app.use('/api/dashboard', require('./modules/dashboard/routes'));
 app.use('/api/relatorios', require('./modules/relatorios/routes'));

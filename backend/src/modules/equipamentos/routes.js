@@ -2,6 +2,7 @@ const router = require('express').Router();
 const db = require('../../config/db');
 const { authenticate, requireAdmin } = require('../../middlewares/auth');
 const { HttpError, wrap, required, flag, toId, emptyToNull } = require('../../utils/http');
+const { registrar, nomeDoEquip } = require('../../utils/atividade');
 
 router.use(authenticate);
 
@@ -265,6 +266,7 @@ router.post('/', wrap(async (req, res) => {
     return rows[0].id;
   });
   const full = await db.query(`${SELECT} WHERE e.id = $1`, [id]);
+  await registrar(req, 'CADASTROU', 'Equipamento', `${full.rows[0].tipo}: ${nomeDoEquip(full.rows[0])} — ${full.rows[0].setor_nome}`, full.rows[0].unidade_id);
   res.status(201).json(full.rows[0]);
 }));
 
@@ -288,6 +290,7 @@ router.put('/:id', requireAdmin, wrap(async (req, res) => {
     await ligarImpressoras(c, id, d.computador ? d.impressorasIds : [], d.setorId);
   });
   const full = await db.query(`${SELECT} WHERE e.id = $1`, [id]);
+  await registrar(req, 'EDITOU', 'Equipamento', `${full.rows[0].tipo}: ${nomeDoEquip(full.rows[0])} — ${full.rows[0].setor_nome}`, full.rows[0].unidade_id);
   res.json(full.rows[0]);
 }));
 
@@ -297,13 +300,16 @@ router.patch('/:id/ativo', requireAdmin, wrap(async (req, res) => {
   const { rowCount } = await db.query('UPDATE equipamentos SET status=$1 WHERE id=$2', [req.body.ativo ? 'ATIVO' : 'INATIVO', toId(req.params.id)]);
   if (!rowCount) throw new HttpError(404, 'Equipamento não encontrado');
   const full = await db.query(`${SELECT} WHERE e.id = $1`, [toId(req.params.id)]);
+  await registrar(req, req.body.ativo ? 'REATIVOU' : 'INATIVOU', 'Equipamento', `${full.rows[0].tipo}: ${nomeDoEquip(full.rows[0])} — ${full.rows[0].setor_nome}`, full.rows[0].unidade_id);
   res.json(full.rows[0]);
 }));
 
 // Exclusão definitiva (só administrador). Impressoras ligadas a este computador ficam sem ligação (ON DELETE SET NULL).
 router.delete('/:id', requireAdmin, wrap(async (req, res) => {
+  const antes = (await db.query(`${SELECT} WHERE e.id = $1`, [toId(req.params.id)])).rows[0];
   const { rowCount } = await db.query('DELETE FROM equipamentos WHERE id = $1', [toId(req.params.id)]);
   if (!rowCount) throw new HttpError(404, 'Equipamento não encontrado');
+  await registrar(req, 'EXCLUIU', 'Equipamento', `${antes.tipo}: ${nomeDoEquip(antes)} — ${antes.setor_nome}`, antes.unidade_id);
   res.status(204).end();
 }));
 

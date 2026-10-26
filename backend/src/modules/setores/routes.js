@@ -2,6 +2,7 @@ const router = require('express').Router();
 const db = require('../../config/db');
 const { authenticate, requireAdmin } = require('../../middlewares/auth');
 const { HttpError, wrap, required, flag, toId, emptyToNull } = require('../../utils/http');
+const { registrar } = require('../../utils/atividade');
 
 router.use(authenticate);
 
@@ -62,6 +63,7 @@ router.post('/', requireAdmin, wrap(async (req, res) => {
     [unidadeId, b.nome.trim(), b.codigo.trim().toUpperCase(), emptyToNull(b.andar), emptyToNull(b.localizacao),
      emptyToNull(b.responsavel), emptyToNull(b.ramal), emptyToNull(b.observacoes), b.ativo !== false]
   );
+  await registrar(req, 'CADASTROU', 'Setor', rows[0].nome, rows[0].unidade_id);
   res.status(201).json(rows[0]);
 }));
 
@@ -81,6 +83,7 @@ router.put('/:id', requireAdmin, wrap(async (req, res) => {
      typeof b.ativo === 'boolean' ? b.ativo : null, toId(req.params.id)]
   );
   if (!rows[0]) throw new HttpError(404, 'Setor não encontrado');
+  await registrar(req, 'EDITOU', 'Setor', rows[0].nome, rows[0].unidade_id);
   res.json(rows[0]);
 }));
 
@@ -97,8 +100,10 @@ router.delete('/:id', requireAdmin, wrap(async (req, res) => {
   if (t.rows[0].n > 0) {
     throw new HttpError(409, `Este setor tem ${t.rows[0].n} equipamento(s). Exclua ou mova os equipamentos antes, ou apenas inative o setor.`);
   }
+  const antes = (await db.query('SELECT nome, unidade_id FROM setores WHERE id = $1', [id])).rows[0];
   const { rowCount } = await db.query('DELETE FROM setores WHERE id = $1', [id]);
   if (!rowCount) throw new HttpError(404, 'Setor não encontrado');
+  await registrar(req, 'EXCLUIU', 'Setor', antes.nome, antes.unidade_id);
   res.json({ ok: true });
 }));
 

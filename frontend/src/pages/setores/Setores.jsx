@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { api } from '../../api/client';
@@ -69,7 +69,7 @@ function SetorForm({ setor, inicial, unidades, divisoes, onClose, onSaved }) {
 }
 
 export default function Setores() {
-  const { isAdmin, unidadeId } = useAuth();
+  const { isAdmin, unidadeId, setUnidadeAtiva } = useAuth();
   const nav = useNavigate();
   const [q, setQ] = useState('');
   const [divisao, setDivisao] = useState('');
@@ -81,7 +81,9 @@ export default function Setores() {
   const busca = useDebounced(q);
   const unidades = useApi('/unidades');
   const { data, loading, error, reload } = useApi('/setores', { q: busca, unidade_id: unidadeId, inativos });
-  const todos = useApi('/setores', { inativos: true });
+  const todos = useApi('/setores', { inativos: true, unidade_id: unidadeId });
+  // Trocou a unidade no menu: volta para "Todas" as divisões daquela unidade
+  useEffect(() => { setDivisao(''); }, [unidadeId]);
   const resumoLeito = useApi('/equipamentos/beira-leito/resumo', { unidade_id: unidadeId });
   const leitos = Object.fromEntries((resumoLeito.data || []).map((r) => [r.divisao, r.total]));
   // Busca também por equipamento (hostname, TeamViewer, IP, patrimônio, modelo, série)
@@ -116,12 +118,31 @@ export default function Setores() {
     catch (err) { setErro(err.message); }
   }
 
+  // Administrador: primeiro escolhe a unidade, depois vê os setores dela
+  const listaUnidades = unidades.data || [];
+  const seletorUnidade = isAdmin && listaUnidades.length > 0 && (
+    <div className="divisoes">
+      {listaUnidades.map((u) => (
+        <button key={u.id} className={String(unidadeId) === String(u.id) ? 'ativo' : ''} onClick={() => setUnidadeAtiva(String(u.id))}>{u.nome}</button>
+      ))}
+    </div>
+  );
+  if (isAdmin && !unidadeId && listaUnidades.length > 0) {
+    return (
+      <>
+        <PageHeader title="Setores" subtitle="Escolha a unidade para ver os setores" />
+        {seletorUnidade}
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHeader title="Setores" subtitle="Setores por divisão">
-        {isAdmin && <button className="btn btn-primary" onClick={() => setModal({ localizacao: divisao })}><Plus size={18} /> Novo setor</button>}
+      <PageHeader title="Setores" subtitle={isAdmin && unidadeId ? `Setores por divisão · ${(unidades.data || []).find((u) => String(u.id) === String(unidadeId))?.nome || ''}` : 'Setores por divisão'}>
+        {isAdmin && <button className="btn btn-primary" onClick={() => setModal({ localizacao: divisao, unidade_id: unidadeId })}><Plus size={18} /> Novo setor</button>}
       </PageHeader>
 
+      {seletorUnidade}
       <div className="toolbar">
         <SearchBox value={q} onChange={setQ} placeholder="Buscar setor ou equipamento (hostname, TeamViewer, IP)…" />
       </div>

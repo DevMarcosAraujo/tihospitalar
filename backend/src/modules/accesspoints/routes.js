@@ -2,6 +2,7 @@ const router = require('express').Router();
 const db = require('../../config/db');
 const { authenticate, requireAdmin } = require('../../middlewares/auth');
 const { HttpError, wrap, required, toId, emptyToNull } = require('../../utils/http');
+const { registrar } = require('../../utils/atividade');
 
 // Access Points e o ponto de rede/porta do switch onde cada um está ligado.
 // Siglas: AP_<NUM>_PT_<PONTO>  e  CABO_SW_<RACK>_PT_<PORTA DO RACK>
@@ -74,7 +75,9 @@ router.post('/', wrap(async (req, res) => {
   const { rows } = await db.query(
     `INSERT INTO access_points (unidade_id, setor_id, numero, ponto, rack, porta, observacoes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
     [d.unidadeId, d.setorId, d.numero, d.ponto, d.rack, d.porta, d.observacoes]);
-  res.status(201).json((await db.query(`${SELECT} WHERE a.id = $1`, [rows[0].id])).rows[0]);
+  const novo = (await db.query(`${SELECT} WHERE a.id = $1`, [rows[0].id])).rows[0];
+  await registrar(req, 'CADASTROU', 'Access Point', `${novo.nome_ap} — ${novo.setor_nome}`, novo.unidade_id);
+  res.status(201).json(novo);
 }));
 
 router.put('/:id', requireAdmin, wrap(async (req, res) => {
@@ -84,12 +87,16 @@ router.put('/:id', requireAdmin, wrap(async (req, res) => {
     `UPDATE access_points SET unidade_id=$1, setor_id=$2, numero=$3, ponto=$4, rack=$5, porta=$6, observacoes=$7 WHERE id=$8`,
     [d.unidadeId, d.setorId, d.numero, d.ponto, d.rack, d.porta, d.observacoes, id]);
   if (!rowCount) throw new HttpError(404, 'Access Point não encontrado');
-  res.json((await db.query(`${SELECT} WHERE a.id = $1`, [id])).rows[0]);
+  const atual = (await db.query(`${SELECT} WHERE a.id = $1`, [id])).rows[0];
+  await registrar(req, 'EDITOU', 'Access Point', `${atual.nome_ap} — ${atual.setor_nome}`, atual.unidade_id);
+  res.json(atual);
 }));
 
 router.delete('/:id', requireAdmin, wrap(async (req, res) => {
+  const antes = (await db.query(`${SELECT} WHERE a.id = $1`, [toId(req.params.id)])).rows[0];
   const { rowCount } = await db.query('DELETE FROM access_points WHERE id = $1', [toId(req.params.id)]);
   if (!rowCount) throw new HttpError(404, 'Access Point não encontrado');
+  await registrar(req, 'EXCLUIU', 'Access Point', `${antes.nome_ap} — ${antes.setor_nome}`, antes.unidade_id);
   res.status(204).end();
 }));
 

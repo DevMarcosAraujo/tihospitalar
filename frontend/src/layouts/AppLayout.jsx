@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  Building2, Download, Map as MapIcon, FileText, Layers, LayoutDashboard, LogOut, Menu,
+  Building2, ClipboardCheck, Download, Map as MapIcon, FileText, Layers, LayoutDashboard, LogOut, Menu,
   PanelLeftClose, PanelLeftOpen, Settings, Users, Wifi, X,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
@@ -15,6 +15,7 @@ const MENU = [
   { to: '/setores', label: 'Setores', icon: Layers },
   { to: '/access-points', label: 'Access Points', icon: Wifi },
   { to: '/usuarios', label: 'Usuários', icon: Users, admin: true },
+  { to: '/atividades', label: 'Atividades', icon: ClipboardCheck, admin: true },
   { to: '/exportar', label: 'Exportar', icon: Download, admin: true },
   { to: '/relatorios', label: 'Relatórios', icon: FileText, admin: true },
   { to: '/configuracoes', label: 'Configurações', icon: Settings, admin: true },
