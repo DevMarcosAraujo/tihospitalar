@@ -463,3 +463,18 @@ a.setor-item { text-decoration: none; color: inherit; }
 .painel-acoes { display: flex; gap: .5rem; flex-wrap: wrap; }
 .sino-num { margin-left: .6rem; padding: .15rem .6rem; border-radius: 99px; background: #f59e0b; color: #fff; font-size: .8rem; font-weight: 700; }
 .atividades-lista li.nova { background: rgba(245, 158, 11, .1); border-radius: 8px; padding: .4rem .5rem; }
+
+.servicos-lista { display: grid; gap: .8rem; }
+.servico { border-left: 4px solid var(--line); }
+.servico.st-AGUARDANDO_APROVACAO { border-left-color: #f59e0b; }
+.servico.st-EM_ANDAMENTO { border-left-color: var(--blue); }
+.servico.st-CONCLUIDO { border-left-color: #16a34a; }
+.servico.atrasado { border-left-color: var(--red); }
+.servico-topo { display: flex; justify-content: space-between; gap: .75rem; flex-wrap: wrap; align-items: flex-start; }
+.servico-topo h3 { margin: 0 0 .2rem; }
+.servico-meta { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+.servico-acoes { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .8rem; }
+.servico-aviso { margin-top: .7rem; padding: .55rem .8rem; border-radius: 8px; background: var(--amber-bg); color: var(--amber); font-size: .9rem; }
+.servico-aviso.ok { background: var(--green-bg); color: var(--green); }
+.menu-num { margin-left: auto; min-width: 20px; padding: .05rem .45rem; border-radius: 99px; background: #f59e0b; color: #fff; font-size: .75rem; font-weight: 700; text-align: center; }
+.aviso-servicos { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .8rem 1rem; margin: 0 0 1rem; border-radius: 10px; background: var(--amber-bg); color: var(--amber); font-weight: 600; text-decoration: none; }

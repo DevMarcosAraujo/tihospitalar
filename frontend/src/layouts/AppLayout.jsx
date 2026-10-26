@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  Building2, ClipboardCheck, Download, Map as MapIcon, FileText, Layers, LayoutDashboard, LogOut, Menu,
+  Briefcase, Building2, ClipboardCheck, Download, Map as MapIcon, FileText, Layers, LayoutDashboard, LogOut, Menu,
   PanelLeftClose, PanelLeftOpen, Settings, Users, Wifi, X,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
@@ -14,6 +14,7 @@ const MENU = [
   { to: '/mapeamento', label: 'Mapeamento', icon: MapIcon, recurso: 'mapeamento_tecnicos' },
   { to: '/setores', label: 'Setores', icon: Layers },
   { to: '/access-points', label: 'Access Points', icon: Wifi },
+  { to: '/servicos', label: 'Serviços', icon: Briefcase, badge: true },
   { to: '/usuarios', label: 'Usuários', icon: Users, admin: true },
   { to: '/atividades', label: 'Atividades', icon: ClipboardCheck, admin: true },
   { to: '/exportar', label: 'Exportar', icon: Download, admin: true },
@@ -59,6 +60,9 @@ const inicial = () => {
 export default function AppLayout() {
   const { user, logout, isAdmin, recursos, unidadeId, setUnidadeAtiva } = useAuth();
   const unidades = useApi(isAdmin ? '/unidades' : null);
+  const resumoServ = useApi('/servicos/resumo');
+  useEffect(() => { const t = setInterval(resumoServ.reload, 30000); return () => clearInterval(t); }, [resumoServ.reload]);
+  const numServ = isAdmin ? (resumoServ.data?.aprovar || 0) + (resumoServ.data?.devolvidos || 0) : resumoServ.data?.abertos;
   const nomeUnidade = isAdmin ? (unidades.data || []).find((u) => String(u.id) === String(unidadeId))?.nome || 'Todas as unidades' : user.unidade_nome;
   const mobile = useMobile();
   const [recolhido, setRecolhido] = useState(inicial);
@@ -115,10 +119,11 @@ export default function AppLayout() {
           <div className="unidade-seletor"><span>Unidade</span><strong>{user.unidade_nome}</strong></div>
         )}
         <nav>
-          {MENU.filter((m) => isAdmin || (!m.admin && (!m.recurso || recursos[m.recurso]))).map(({ to, label, icon: Icon, end }) => (
+          {MENU.filter((m) => isAdmin || (!m.admin && (!m.recurso || recursos[m.recurso]))).map(({ to, label, icon: Icon, end, badge }) => (
             <NavLink key={to} to={to} end={end} title={label} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               <Icon size={20} />
               {!mini && <span>{label}</span>}
+              {badge && numServ > 0 && <b className="menu-num">{numServ}</b>}
             </NavLink>
           ))}
         </nav>

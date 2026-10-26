@@ -57,6 +57,7 @@ export default function Dashboard() {
   const { data, loading, error } = useApi('/dashboard', { unidade_id: unidadeId });
 
   const unidades = useApi('/unidades');
+  const servicos = useApi('/servicos/resumo');
   const nav = useNavigate();
   const abrirUnidade = (id) => { if (isAdmin) setUnidadeAtiva(String(id)); nav('/setores'); };
 
@@ -72,6 +73,12 @@ export default function Dashboard() {
       <ErrorMsg>{error}</ErrorMsg>
       {loading && !data ? <Loading /> : data && (
         <>
+          {isAdmin && (servicos.data?.aprovar > 0 || servicos.data?.devolvidos > 0) && (
+            <Link to="/servicos" className="aviso-servicos">{[servicos.data.aprovar > 0 && `${servicos.data.aprovar} aguardando aprovação`, servicos.data.devolvidos > 0 && `${servicos.data.devolvidos} pendente(s) para atribuir a outro técnico`].filter(Boolean).join(' · ')} <ChevronRight size={18} /></Link>
+          )}
+          {!isAdmin && servicos.data?.abertos > 0 && (
+            <Link to="/servicos" className="aviso-servicos">Você tem {servicos.data.abertos} serviço(s) para fazer{servicos.data.reprovados > 0 ? ` (${servicos.data.reprovados} reprovado(s) para refazer)` : ''} <ChevronRight size={18} /></Link>
+          )}
           <div className="stats">
             {cards.map(([rotulo, valor, alerta]) => (
               <div key={rotulo} className={`stat ${alerta ? 'warn' : ''}`}><span>{rotulo}</span><strong>{valor}</strong></div>

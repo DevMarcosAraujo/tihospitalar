@@ -12,6 +12,7 @@ import Mapeamento from './pages/mapeamento/Mapeamento';
 import BeiraLeito from './pages/beira-leito/BeiraLeito';
 import Usuarios from './pages/usuarios/Usuarios';
 import AccessPoints from './pages/accesspoints/AccessPoints';
+import Servicos from './pages/servicos/Servicos';
 import Atividades from './pages/atividades/Atividades';
 import Exportar from './pages/exportar/Exportar';
 import Relatorios from './pages/relatorios/Relatorios';
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="tarefas/*" element={<Navigate to="/" replace />} />
         <Route path="usuarios" element={<Protegida admin><Usuarios /></Protegida>} />
         <Route path="access-points" element={<AccessPoints />} />
+        <Route path="servicos" element={<Servicos />} />
         <Route path="atividades" element={<Protegida admin><Atividades /></Protegida>} />
         <Route path="exportar" element={<Protegida admin><Exportar /></Protegida>} />
         <Route path="relatorios" element={<Protegida admin><Relatorios /></Protegida>} />
