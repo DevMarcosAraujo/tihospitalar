@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, FileSpreadsheet, FileText } from 'lucide-react';
 import { useApi } from '../../api/useApi';
 import { useAuth } from '../../auth/AuthContext';
 import { Empty, ErrorMsg, Loading, Options, PageHeader } from '../../components/ui';
@@ -40,6 +40,27 @@ function rotuloPeriodo(periodo, ini, fim) {
   return String(ini.getFullYear());
 }
 
+const CABECALHO = ['Data e hora', 'Usuário', 'Perfil', 'Ação', 'O quê', 'Descrição', 'Unidade'];
+const linhaDe = (a) => [fmtDateTime(a.criado_em), a.usuario_nome, a.perfil === 'ADMINISTRADOR' ? 'Administrador' : 'Técnico',
+  a.acao.charAt(0) + a.acao.slice(1).toLowerCase(), a.entidade, a.descricao, a.unidade_nome || '—'];
+
+async function logoPng() {
+  const img = new Image();
+  img.src = '/logo.svg';
+  await img.decode();
+  const c = document.createElement('canvas');
+  c.width = c.height = 512;
+  c.getContext('2d').drawImage(img, 0, 0, 512, 512);
+  return c.toDataURL('image/png');
+}
+
+function baixar(blob, nome) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome; a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function Atividades() {
   const { unidadeId } = useAuth();
   const [periodo, setPeriodo] = useState('dia');
@@ -48,6 +69,50 @@ export default function Atividades() {
   const usuarios = useApi('/usuarios');
   const [ini, fim] = intervalo(periodo, ref);
   const { data, loading, error } = useApi('/atividades', { de: iso(ini), ate: iso(fim), usuario_id: usuarioId, unidade_id: unidadeId });
+
+  const nomeArquivo = `atividades-${periodo}-${iso(ini)}`;
+
+  function excel() {
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const linhas = [CABECALHO, ...(data || []).map(linhaDe)].map((l) => l.map(esc).join(';')).join('\r\n');
+    baixar(new Blob(['﻿' + linhas], { type: 'text/csv;charset=utf-8' }), `${nomeArquivo}.csv`);
+  }
+
+  async function pdf() {
+    const [{ jsPDF }, { default: autoTable }, logo] = await Promise.all([import('jspdf'), import('jspdf-autotable'), logoPng()]);
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
+    const marcadas = new Set();
+    const moldura = () => {
+      const n = doc.internal.getCurrentPageInfo().pageNumber;
+      if (marcadas.has(n)) return;
+      marcadas.add(n);
+      doc.setGState(new doc.GState({ opacity: 0.07 }));
+      doc.addImage(logo, 'PNG', W / 2 - 170, H / 2 - 170, 340, 340);
+      doc.setGState(new doc.GState({ opacity: 1 }));
+      doc.setFillColor(7, 11, 31); doc.rect(0, 0, W, 62, 'F');
+      doc.addImage(logo, 'PNG', 30, 12, 38, 38);
+      doc.setTextColor(255); doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+      doc.text('Atividades executadas - MedSênior SIG', 80, 32);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(155, 233, 247);
+      doc.text(`${rotuloPeriodo(periodo, ini, fim)}  |  ${(data || []).length} atividade(s)  |  Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 80, 48);
+      doc.setFillColor(0, 229, 255); doc.rect(0, 62, W, 3, 'F');
+      doc.setTextColor(120); doc.setFontSize(8);
+      doc.text('Arquitetura: Rodrigo Souza  |  Engenheiro: Marcos Araujo', 30, H - 16);
+      doc.text(`Página ${n}`, W - 30, H - 16, { align: 'right' });
+    };
+    moldura();
+    autoTable(doc, {
+      head: [CABECALHO], body: (data || []).map(linhaDe), startY: 82,
+      margin: { top: 82, left: 30, right: 30, bottom: 30 },
+      styles: { fontSize: 8, cellPadding: 4, textColor: [30, 35, 60], lineColor: [220, 224, 240], lineWidth: 0.4 },
+      headStyles: { fillColor: [74, 40, 190], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [244, 246, 255] },
+      didDrawPage: moldura,
+    });
+    doc.save(`${nomeArquivo}.pdf`);
+  }
 
   // Um bloco por pessoa, com o total do período e a lista de tiks
   const porPessoa = useMemo(() => {
@@ -62,7 +127,10 @@ export default function Atividades() {
 
   return (
     <>
-      <PageHeader title="Atividades dos técnicos" subtitle="Tudo o que cada técnico fez no sistema, com data e hora" />
+      <PageHeader title="Atividades dos técnicos" subtitle="Tudo o que cada técnico fez no sistema, com data e hora">
+        <button className="btn" onClick={excel} disabled={!data?.length}><FileSpreadsheet size={18} /> Baixar Excel</button>
+        <button className="btn btn-primary" onClick={pdf} disabled={!data?.length}><FileText size={18} /> Baixar PDF</button>
+      </PageHeader>
 
       <div className="tabs">
         {PERIODOS.map(([id, nome]) => (

@@ -456,3 +456,10 @@ a.setor-item { text-decoration: none; color: inherit; }
 .atividades-lista li { display: flex; gap: .6rem; align-items: flex-start; padding-bottom: .6rem; border-bottom: 1px solid var(--line); }
 .atividades-lista li:last-child { border-bottom: 0; padding-bottom: 0; }
 .atividades-lista .tik { color: #16a34a; flex: none; margin-top: 2px; }
+
+.painel-atividades { margin: 1rem 0 1.5rem; }
+.painel-atividades.tem-novas { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245, 158, 11, .25); }
+.painel-topo { display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.painel-acoes { display: flex; gap: .5rem; flex-wrap: wrap; }
+.sino-num { margin-left: .6rem; padding: .15rem .6rem; border-radius: 99px; background: #f59e0b; color: #fff; font-size: .8rem; font-weight: 700; }
+.atividades-lista li.nova { background: rgba(245, 158, 11, .1); border-radius: 8px; padding: .4rem .5rem; }

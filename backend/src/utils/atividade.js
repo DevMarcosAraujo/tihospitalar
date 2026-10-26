@@ -12,7 +12,11 @@ const pronto = db.query(
      criado_em TIMESTAMPTZ NOT NULL DEFAULT now()
    );
    CREATE INDEX IF NOT EXISTS idx_atividade_log_data ON atividade_log (criado_em);
-   CREATE INDEX IF NOT EXISTS idx_atividade_log_usuario ON atividade_log (usuario_id)`
+   CREATE INDEX IF NOT EXISTS idx_atividade_log_usuario ON atividade_log (usuario_id);
+   CREATE TABLE IF NOT EXISTS atividade_leitura (
+     usuario_id INT PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+     visto_ate TIMESTAMPTZ NOT NULL DEFAULT '1970-01-01'
+   )`
 );
 
 // Nunca derruba a operação principal: se o registro falhar, só ignora

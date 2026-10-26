@@ -1,33 +1,64 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Bell, CheckCircle2, ChevronRight } from 'lucide-react';
+import { api } from '../../api/client';
+import { fmtDateTime } from '../../utils/format';
 import { useAuth } from '../../auth/AuthContext';
 import { useApi } from '../../api/useApi';
-import { ErrorMsg, Loading, Options, PageHeader, SearchBox } from '../../components/ui';
+import { ErrorMsg, Loading, PageHeader } from '../../components/ui';
 
-const COM_LEITO = ['SETOR PS/CDM', 'UTI', 'CENTRO CIRÚRGICO']; // divisões que têm beira leito
+// Notificação para o administrador: novos cadastros de equipamentos feitos pelos técnicos, por unidade
+function PainelAtividades({ unidadeId }) {
+  const { data, reload } = useApi('/atividades/resumo', { unidade_id: unidadeId });
+  useEffect(() => { const t = setInterval(reload, 30000); return () => clearInterval(t); }, [reload]);
+  if (!data) return null;
+
+  async function marcarVistas() {
+    try { await api('/atividades/visto', { method: 'POST' }); } catch { /* tenta de novo no próximo clique */ }
+    reload();
+  }
+
+  return (
+    <div className={`card painel-atividades ${data.nao_vistas ? 'tem-novas' : ''}`}>
+      <div className="painel-topo">
+        <h2 style={{ margin: 0 }}><Bell size={20} style={{ verticalAlign: '-3px', marginRight: 8 }} />Novos cadastros dos técnicos
+          {data.nao_vistas > 0 && <span className="sino-num">{data.nao_vistas}</span>}</h2>
+        <div className="painel-acoes">
+          {data.nao_vistas > 0 && <button className="btn btn-sm" onClick={marcarVistas}>Marcar como vistos</button>}
+        </div>
+      </div>
+      {data.recentes.length === 0 ? <p className="muted" style={{ margin: 0 }}>Nenhum técnico cadastrou equipamentos ainda.</p> : (
+        <>
+          {data.por_unidade.some((u) => u.novas > 0) && (
+            <div className="chips" style={{ marginBottom: '.75rem' }}>
+              {data.por_unidade.filter((u) => u.novas > 0).map((u) => <span key={u.unidade_nome} className="chip">{u.unidade_nome}: {u.novas} novo(s)</span>)}
+            </div>
+          )}
+          <ul className="atividades-lista">
+            {data.recentes.map((a) => (
+              <li key={a.id} className={a.nova ? 'nova' : ''}>
+                <CheckCircle2 size={18} className="tik" />
+                <div>
+                  <strong>{a.usuario_nome}</strong> cadastrou {a.descricao}
+                  <div className="muted">{fmtDateTime(a.criado_em)}{a.unidade_nome ? ` · ${a.unidade_nome}` : ''}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <Link to="/atividades" className="btn btn-sm" style={{ marginTop: '.75rem' }}>Ver todas as atividades</Link>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function Dashboard() {
-  const { isAdmin, user, unidadeId } = useAuth();
+  const { isAdmin, user, unidadeId, setUnidadeAtiva } = useAuth();
   const { data, loading, error } = useApi('/dashboard', { unidade_id: unidadeId });
 
-  // Setores de todas as unidades, visíveis para qualquer perfil, agrupados por macro-setor
-  const setores = useApi('/setores', { unidade_id: unidadeId });
-  const resumoLeito = useApi('/equipamentos/beira-leito/resumo', { unidade_id: unidadeId });
-  const leitos = Object.fromEntries((resumoLeito.data || []).map((r) => [r.divisao, r.total]));
-  const [busca, setBusca] = useState('');
-  const [abertos, setAbertos] = useState({}); // macro-setores: começam minimizados
-  const grupos = useMemo(() => {
-    const m = new Map();
-    const norm = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-    const termo = norm(busca.trim());
-    (setores.data || []).filter((st) => !termo || norm(st.nome).includes(termo) || norm(st.localizacao).includes(termo)).forEach((st) => {
-      const g = st.localizacao || 'Outros';
-      if (!m.has(g)) m.set(g, []);
-      m.get(g).push(st);
-    });
-    return [...m.entries()];
-  }, [setores.data, busca]);
+  const unidades = useApi('/unidades');
+  const nav = useNavigate();
+  const abrirUnidade = (id) => { if (isAdmin) setUnidadeAtiva(String(id)); nav('/setores'); };
 
   const c = data?.cards;
   const cards = c && [
@@ -46,35 +77,17 @@ export default function Dashboard() {
               <div key={rotulo} className={`stat ${alerta ? 'warn' : ''}`}><span>{rotulo}</span><strong>{valor}</strong></div>
             ))}
           </div>
-          <h2>Setores</h2>
-          <div className="toolbar">
-            <SearchBox value={busca} onChange={setBusca} placeholder="Buscar setor…" />
-          </div>
-          {!grupos.length && <p className="muted">Nenhum setor encontrado.</p>}
-          {grupos.map(([macro, lista]) => {
-            const aberto = !!busca.trim() || !!abertos[macro]; // buscando, mostra os resultados
-            return (
-            <div key={macro} className="setores-grupo">
-              <button type="button" className="setores-titulo" onClick={() => setAbertos({ ...abertos, [macro]: !aberto })}>
-                {aberto ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                {macro} <span className="mapa-qtd">{lista.length}</span>
+          <h2>Unidades</h2>
+          {!(unidades.data || []).length && <p className="muted">Nenhuma unidade cadastrada.</p>}
+          <div className="setores-grid">
+            {(unidades.data || []).map((u) => (
+              <button key={u.id} type="button" className="setor-tile" onClick={() => abrirUnidade(u.id)}>
+                <span>{u.nome}<small className="muted" style={{ display: 'block' }}>{u.total_setores} setor(es) · {u.total_equipamentos} equipamento(s)</small></span>
+                <ChevronRight size={18} />
               </button>
-              {aberto && <div className="setores-grid">
-                {COM_LEITO.includes(macro) && !busca.trim() && (
-                  <Link to={`/beira-leito/${encodeURIComponent(macro)}`} className="setor-tile leito-tile">
-                    <span>Beira leito</span><strong>{leitos[macro] || 0}</strong>
-                  </Link>
-                )}
-                {lista.map((st) => (
-                  <Link key={st.id} to={`/setores/${st.id}`} className="setor-tile">
-                    <span>{st.nome}</span>
-                    <strong>{st.total_equipamentos}</strong>
-                  </Link>
-                ))}
-              </div>}
-            </div>
-            );
-          })}
+            ))}
+          </div>
+          {isAdmin && <PainelAtividades unidadeId={unidadeId} />}
         </>
       )}
     </>
