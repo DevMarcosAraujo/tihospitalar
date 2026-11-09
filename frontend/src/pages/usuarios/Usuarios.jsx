@@ -62,12 +62,11 @@ function UsuarioForm({ usuario, onClose, onSaved }) {
 export default function Usuarios() {
   const { user } = useAuth();
   const [q, setQ] = useState('');
-  const [inativos, setInativos] = useState(false);
   const [modal, setModal] = useState(null);
   const [erro, setErro] = useState('');
   const [provisoria, setProvisoria] = useState(null);
   const busca = useDebounced(q);
-  const { data, loading, error, reload } = useApi('/usuarios', { q: busca, inativos });
+  const { data, loading, error, reload } = useApi('/usuarios', { q: busca, inativos: true });
 
   async function alternar(u) {
     setErro('');
@@ -91,7 +90,6 @@ export default function Usuarios() {
       </PageHeader>
       <div className="toolbar">
         <SearchBox value={q} onChange={setQ} placeholder="Buscar por nome ou usuário…" />
-        <label className="check"><input type="checkbox" checked={inativos} onChange={(e) => setInativos(e.target.checked)} /> Mostrar inativos</label>
       </div>
       <ErrorMsg>{erro || error}</ErrorMsg>
       <div className="table-wrap">
@@ -99,7 +97,7 @@ export default function Usuarios() {
           <table>
             <thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Unidade</th><th>E-mail</th><th>Telefone</th><th>Status</th><th /></tr></thead>
             <tbody>
-              {data.map((u) => (
+              {[...data].sort((a, b) => Number(b.ativo) - Number(a.ativo)).map((u) => ( // inativos ficam visíveis, no fim da lista
                 <tr key={u.id} className={u.ativo ? '' : 'inativo'}>
                   <td><strong>{u.nome}</strong></td><td>{u.usuario}</td>
                   <td><Badge map={PERFIL} value={u.perfil} /></td>

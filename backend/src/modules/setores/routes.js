@@ -44,6 +44,15 @@ router.get('/:id', wrap(async (req, res) => {
   res.json({ ...rows[0], resumo_categorias: resumo.rows });
 }));
 
+// O que mudou entre o setor antes e depois da edição (para mostrar ao administrador e registrar)
+const CAMPOS = [['unidade_nome', 'Unidade'], ['nome', 'Nome'], ['localizacao', 'Divisão'], ['ramal', 'Ramal'], ['responsavel', 'Responsável'], ['observacoes', 'Observações']];
+function diferencas(antes, depois) {
+  const v = (x) => (x === null || x === undefined || x === '' ? '—' : String(x));
+  const lista = CAMPOS.filter(([k]) => v(antes[k]) !== v(depois[k])).map(([k, campo]) => ({ campo, de: v(antes[k]), para: v(depois[k]) }));
+  if (antes.ativo !== depois.ativo) lista.push({ campo: 'Status', de: antes.ativo ? 'Ativo' : 'Inativo', para: depois.ativo ? 'Ativo' : 'Inativo' });
+  return lista;
+}
+
 async function validarUnidade(unidadeId) {
   const { rows } = await db.query('SELECT ativo FROM unidades WHERE id = $1', [unidadeId]);
   if (!rows[0]) throw new HttpError(400, 'Unidade inexistente');
@@ -72,8 +81,9 @@ router.put('/:id', requireAdmin, wrap(async (req, res) => {
   required(b, ['unidade_id', 'nome']);
   const unidadeId = toId(b.unidade_id);
   await validarUnidade(unidadeId);
-  const atual = await db.query('SELECT codigo FROM setores WHERE id = $1', [toId(req.params.id)]);
-  b.codigo = b.codigo || atual.rows[0]?.codigo;
+  const antes = (await db.query('SELECT s.*, u.nome AS unidade_nome FROM setores s JOIN unidades u ON u.id = s.unidade_id WHERE s.id = $1', [toId(req.params.id)])).rows[0];
+  if (!antes) throw new HttpError(404, 'Setor não encontrado');
+  b.codigo = b.codigo || antes.codigo;
   const { rows } = await db.query(
     `UPDATE setores SET unidade_id=$1, nome=$2, codigo=$3, andar=$4, localizacao=$5, responsavel=$6,
             ramal=$7, observacoes=$8, ativo=COALESCE($9, ativo)
@@ -83,14 +93,18 @@ router.put('/:id', requireAdmin, wrap(async (req, res) => {
      typeof b.ativo === 'boolean' ? b.ativo : null, toId(req.params.id)]
   );
   if (!rows[0]) throw new HttpError(404, 'Setor não encontrado');
-  await registrar(req, 'EDITOU', 'Setor', rows[0].nome, rows[0].unidade_id);
-  res.json(rows[0]);
+  const unidadeNova = (await db.query('SELECT nome FROM unidades WHERE id = $1', [rows[0].unidade_id])).rows[0].nome;
+  const alteracoes = diferencas(antes, { ...rows[0], unidade_nome: unidadeNova });
+  const resumo = alteracoes.map((a) => `${a.campo}: ${a.de} → ${a.para}`).join('; ');
+  await registrar(req, 'EDITOU', 'Setor', `${rows[0].nome}${resumo ? ' (' + resumo + ')' : ' (sem alterações)'}`, rows[0].unidade_id);
+  res.json({ ...rows[0], alteracoes });
 }));
 
 router.patch('/:id/ativo', requireAdmin, wrap(async (req, res) => {
   if (typeof req.body.ativo !== 'boolean') throw new HttpError(400, 'Informe ativo true/false');
   const { rows } = await db.query('UPDATE setores SET ativo=$1 WHERE id=$2 RETURNING *', [req.body.ativo, toId(req.params.id)]);
   if (!rows[0]) throw new HttpError(404, 'Setor não encontrado');
+  await registrar(req, rows[0].ativo ? 'REATIVOU' : 'INATIVOU', 'Setor', rows[0].nome, rows[0].unidade_id);
   res.json(rows[0]);
 }));
 

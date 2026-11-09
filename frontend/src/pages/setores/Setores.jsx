@@ -11,7 +11,7 @@ import { Empty, ErrorMsg, Field, FormActions, Loading, Modal, Options, PageHeade
 const COM_LEITO = ['SETOR PS/CDM', 'UTI', 'CENTRO CIRÚRGICO']; // divisões que têm beira leito
 const VAZIO = { unidade_id: '', nome: '', localizacao: '', responsavel: '', ramal: '', observacoes: '', ativo: true };
 
-function SetorForm({ setor, inicial, unidades, divisoes, onClose, onSaved }) {
+export function SetorForm({ setor, inicial, unidades, divisoes, onClose, onSaved }) {
   const [f, setF] = useState(setor ? { ...VAZIO, ...setor } : { ...VAZIO, ...(inicial || {}) });
   const [erro, setErro] = useState('');
   const [saving, setSaving] = useState(false);
@@ -28,8 +28,8 @@ function SetorForm({ setor, inicial, unidades, divisoes, onClose, onSaved }) {
     e.preventDefault();
     setSaving(true); setErro('');
     try {
-      await api(setor ? `/setores/${setor.id}` : '/setores', { method: setor ? 'PUT' : 'POST', body: f });
-      onSaved();
+      const r = await api(setor ? `/setores/${setor.id}` : '/setores', { method: setor ? 'PUT' : 'POST', body: f });
+      onSaved(setor ? r : null);
     } catch (err) { setErro(err.message); setSaving(false); }
   }
 
@@ -68,6 +68,30 @@ function SetorForm({ setor, inicial, unidades, divisoes, onClose, onSaved }) {
   );
 }
 
+// Depois de editar: mostra ao administrador exatamente o que mudou (de → para)
+export function SetorEditado({ setor, onClose }) {
+  const lista = setor.alteracoes || [];
+  return (
+    <Modal title="Setor atualizado" onClose={onClose}>
+      <p style={{ marginTop: 0 }}><strong>{setor.nome}</strong></p>
+      {!lista.length ? <p className="muted">Você salvou, mas nenhum campo foi alterado.</p> : (
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Antes</th><th>Agora</th></tr></thead>
+            <tbody>
+              {lista.map((a) => (
+                <tr key={a.campo}><td><strong>{a.campo}</strong></td><td><span className="muted">{a.de}</span></td><td><strong>{a.para}</strong></td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="muted">Esta edição também ficou registrada em Atividades.</p>
+      <div className="form-actions"><button className="btn btn-primary" onClick={onClose}>Fechar</button></div>
+    </Modal>
+  );
+}
+
 export default function Setores() {
   const { isAdmin, unidadeId, setUnidadeAtiva } = useAuth();
   const nav = useNavigate();
@@ -77,6 +101,7 @@ export default function Setores() {
   const [abertos, setAbertos] = useState({}); // começa tudo minimizado
   const [modal, setModal] = useState(null);
   const [ver, setVer] = useState(null);
+  const [editado, setEditado] = useState(null);
   const [erro, setErro] = useState('');
   const busca = useDebounced(q);
   const unidades = useApi('/unidades');
@@ -231,8 +256,9 @@ export default function Setores() {
       {ver && <EquipamentoDetalhe equip={ver} onClose={() => setVer(null)} />}
       {modal && (
         <SetorForm setor={modal.id ? modal : null} inicial={modal.id ? null : modal} unidades={unidades.data} divisoes={divisoes}
-          onClose={() => setModal(null)} onSaved={() => { setModal(null); recarregar(); }} />
+          onClose={() => setModal(null)} onSaved={(r) => { setModal(null); recarregar(); if (r) setEditado(r); }} />
       )}
+      {editado && <SetorEditado setor={editado} onClose={() => setEditado(null)} />}
     </>
   );
 }

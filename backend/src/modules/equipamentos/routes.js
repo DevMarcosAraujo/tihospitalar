@@ -159,7 +159,7 @@ async function preparar(b, user, selfId = null) {
     if (dup) throw new HttpError(409, `Já existe uma impressora com o número de série ${serie} (${onde(dup)})`);
   }
   // Nome padrão da impressora (ex.: IMP_SIG_SCAN_CDM): único no sistema
-  const nomeImp = impressora ? emptyToNull(b.nome)?.toUpperCase().replace(/s+/g, '_') || null : null;
+  const nomeImp = impressora ? emptyToNull(b.nome)?.toUpperCase().replace(/\s+/g, '_') || null : null;
   if (nomeImp) {
     const dup = await achar('upper(trim(e.nome)) = $1', nomeImp);
     if (dup) throw new HttpError(409, `Já existe um equipamento com o nome ${nomeImp} (${onde(dup)})`);
@@ -292,6 +292,31 @@ router.put('/:id', requireAdmin, wrap(async (req, res) => {
   const full = await db.query(`${SELECT} WHERE e.id = $1`, [id]);
   await registrar(req, 'EDITOU', 'Equipamento', `${full.rows[0].tipo}: ${nomeDoEquip(full.rows[0])} — ${full.rows[0].setor_nome}`, full.rows[0].unidade_id);
   res.json(full.rows[0]);
+}));
+
+// Mover um ou vários equipamentos para outro setor da MESMA unidade (só administrador)
+router.post('/mover', requireAdmin, wrap(async (req, res) => {
+  const ids = [...new Set((Array.isArray(req.body.ids) ? req.body.ids : []).map(toId))];
+  if (!ids.length) throw new HttpError(400, 'Escolha ao menos um equipamento');
+  const destino = (await db.query('SELECT s.id, s.nome, s.unidade_id FROM setores s WHERE s.id = $1 AND s.ativo', [toId(req.body.setor_id)])).rows[0];
+  if (!destino) throw new HttpError(400, 'Setor de destino inexistente ou inativo');
+  const sala = ids.length === 1 ? emptyToNull(req.body.sala) : null;
+  const movidos = [];
+  let desligadas = 0;
+  await db.tx(async (c) => {
+    for (const id of ids) {
+      const e = (await c.query(`${SELECT} WHERE e.id = $1`, [id])).rows[0];
+      if (!e) throw new HttpError(404, 'Equipamento não encontrado');
+      if (e.unidade_id !== destino.unidade_id) throw new HttpError(400, `Só é possível mover dentro da mesma unidade (${nomeDoEquip(e)} é de outra unidade)`);
+      if (e.setor_id === destino.id) throw new HttpError(400, `${nomeDoEquip(e)} já está em ${destino.nome}`);
+      // A posição (guichê) era do setor antigo; a impressora deixa de estar ligada ao PC do setor antigo
+      await c.query('UPDATE equipamentos SET setor_id = $1, sala = $2, ligado_a_id = NULL WHERE id = $3', [destino.id, sala, id]);
+      desligadas += (await c.query('UPDATE equipamentos SET ligado_a_id = NULL WHERE ligado_a_id = $1', [id])).rowCount;
+      movidos.push({ id, descricao: `${e.tipo}: ${nomeDoEquip(e)}`, de: e.setor_nome });
+    }
+  });
+  for (const m of movidos) await registrar(req, 'MOVEU', 'Equipamento', `${m.descricao} — ${m.de} → ${destino.nome}`, destino.unidade_id);
+  res.json({ movidos: movidos.length, setor: destino.nome, impressoras_desligadas: desligadas });
 }));
 
 // Inativar / reativar (nunca exclui)
